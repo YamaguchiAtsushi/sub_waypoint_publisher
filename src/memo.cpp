@@ -19,9 +19,6 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-
 
 struct Person
 {
@@ -81,7 +78,7 @@ public:
 
 
         // double waypoint_angle_rad = std::atan2(goal_.pose.position.y - robot_odom_y_ , goal_.pose.position.x - robot_odom_x_); // ラジアン
-        double waypoint_angle_rad = std::atan2(goal_.pose.position.y - robot_y_ , goal_.pose.position.x - robot_x_) - robot_yaw; // ラジアン
+        double waypoint_angle_rad = std::atan2(goal_.pose.position.y - robot_y_ , goal_.pose.position.x - robot_x_); // ラジアン
 
 
         // スキャンデータの各レンジについてクラスタリング処理
@@ -130,8 +127,8 @@ public:
             //各cluster内の点に関して、短冊内にあるかどうか
             for (const auto& point : clusters[i])
             {
-                double angle_rad = std::atan2(point.y, point.x) - waypoint_angle_rad; // ラジアン //次のwaypointを加味できてる？？？
-                // double angle_rad = std::atan2(point.y, point.x);
+                // double angle_rad = std::atan2(point.y, point.x) - waypoint_angle_rad; // ラジアン //次のwaypointを加味できてる？？？
+                double angle_rad = std::atan2(point.y, point.x);
 
                 // ROS_INFO("point.x:%f", point.x);
                 // ROS_INFO("point.y:%f", point.y);
@@ -140,7 +137,7 @@ public:
 
                 double angle_deg = angle_rad * (180.0 / M_PI);   // 度に変換
 
-                if (-7 < angle_deg && angle_deg < 7) 
+                if (-10 < angle_deg && angle_deg < 10) 
                 {
                     // float distance = scan->ranges[i];
                     double distance_judge = distance * std::cos(angle_rad);
@@ -174,7 +171,7 @@ public:
                 double cluster_ave_y = cluster_sum_y / clusters[i].size();
                 double cluster_distance = sqrt(pow(cluster_ave_x, 2) + pow(cluster_ave_y, 2));
 
-                if (cluster_distance_min > cluster_distance && 0.1 <cluster_distance && cluster_distance < 3.0) // 1.5m以内のクラスターの中で最も近いクラスターを探す // 0.1m以上のクラスターを探す(ロボット周辺のノイズを除去)
+                if (cluster_distance_min > cluster_distance && 0.1 <cluster_distance && cluster_distance < 1.5) // 1.5m以内のクラスターの中で最も近いクラスターを探す // 0.1m以上のクラスターを探す(ロボット周辺のノイズを除去)
                 {
                     cluster_distance_min = cluster_distance;
                     cluster_distance_min_number = i;
@@ -338,21 +335,6 @@ public:
         robot_x_ = msg->pose.pose.position.x;
         robot_y_ = msg->pose.pose.position.y;
         robot_r_ = msg->pose.pose.orientation;
-        // クォータニオンをオイラー角に変換
-        tf2::Quaternion q(
-            msg->pose.pose.orientation.x,
-            msg->pose.pose.orientation.y,
-            msg->pose.pose.orientation.z,
-            msg->pose.pose.orientation.w
-        );
-        tf2::Matrix3x3 m(q);
-
-        double roll, pitch, yaw;
-        
-        m.getRPY(roll, pitch, yaw);  // オイラー角（rad）を取得
-        // robot_yaw = yaw * 180.0 / M_PI;
-        robot_yaw = yaw ;
-        // std::cout << "robot_x_:" << robot_x_ << "robot_y_;" << robot_y_ << std::endl;
         // ROS_INFO("Current estimated pose: [robot_x_: %f, robot_y_: %f, theta: %f]", robot_x_, robot_y_, tf::getYaw(msg->pose.pose.orientation));
     }
 
@@ -388,8 +370,6 @@ private:
     double robot_odom_x_, robot_odom_y_;
     double robot_x_, robot_y_;
     int sub_waypoint_state_ = 0;
-
-    double robot_yaw;
 
     
 
